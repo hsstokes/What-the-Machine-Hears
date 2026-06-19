@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What the Machine Hears</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap');
+        :root { --ink: #1a1a1a; --paper: #f2ede8; --paper-mid: #e8e2da; --grid: #ddd8d2; --mid: #8a8580; --warm-border: #ccc7c0; }
+        * { box-sizing: border-box; max-width: 100%; }
+        html, body { overflow-x: hidden; width: 100%; }
+        body { font-family: 'IBM Plex Mono', 'Courier New', monospace; font-size: 13px; color: var(--ink); background-color: var(--paper); background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 28px 28px; padding: 20px; line-height: 1.7; margin: 0; }
+        .page-wrapper { max-width: 900px; width: 95%; margin: 10px auto; border: 1px solid var(--warm-border); border-radius: 4px; padding: 0; background-color: var(--paper); overflow: hidden; }
+        .page-container { width: 100%; margin: 0 auto; border: none; padding: 30px 25px; background-color: var(--paper); position: relative; overflow: hidden; }
+        h1, h2, h3, h4 { color: var(--ink); margin-bottom: 15px; word-wrap: break-word; }
+        h1 { font-family: 'DM Serif Display', serif; font-size: clamp(2rem, 5vw, 3rem); font-weight: 400; text-align: left; border: none; border-bottom: 2px solid var(--ink); padding: 0 0 20px; margin-bottom: 8px; line-height: 1.15; background: none; }
+        h2 { font-family: 'DM Serif Display', serif; font-size: 1.5em; font-weight: 400; text-align: left; border: none; background: none; padding: 0; margin: 2rem 0 1rem; line-height: 1.2; }
+        h3 { font-family: 'Space Mono', monospace; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--mid); margin: 1.5rem 0 0.8rem; border: none; background: none; padding: 0; }
+        h4 { font-family: 'Space Mono', monospace; font-size: 0.72rem; font-weight: 700; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 0.08em; }
+        p { font-family: 'IBM Plex Mono', monospace; font-size: 0.88rem; color: var(--ink); background: none; border: none; padding: 0; margin: 0 0 1em; line-height: 1.8; word-wrap: break-word; }
+        a { color: var(--ink); text-decoration: underline; transition: opacity 0.2s; }
+        a:hover { opacity: 0.6; }
+        .hero-title-bar { padding: 30px 0 25px; border-bottom: 1px solid var(--warm-border); margin-bottom: 25px; }
+        .hero-subtitle { font-family: 'Space Mono', monospace; font-size: 0.68rem; color: var(--mid); margin: 8px 0 0; letter-spacing: 0.12em; text-transform: uppercase; }
+        .hero-gallery { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 25px; }
+        .hero-gallery-item { position: relative; overflow: hidden; border: 1px solid var(--warm-border); border-radius: 3px; background: var(--ink); cursor: pointer; transition: transform 0.2s ease; aspect-ratio: 1; }
+        .hero-gallery-item:hover { transform: translateY(-3px); }
+        .hero-gallery-label { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.85)); color: var(--paper); padding: 24px 8px 8px; font-family: 'Space Mono', monospace; font-size: 0.58rem; text-align: center; text-transform: uppercase; letter-spacing: 0.06em; }
+        .hero-gallery-symbol { font-family: 'DM Serif Display', serif; font-style: italic; font-size: 1.1em; display: flex; align-items: center; justify-content: center; height: 100%; color: var(--paper); }
+        @media (max-width: 600px) { .hero-gallery { grid-template-columns: repeat(3, 1fr); } }
+        .artist-statement { border: none; border-left: 3px solid var(--ink); padding: 14px 0 14px 20px; margin: 25px 0; }
+        .artist-statement p { font-family: 'DM Serif Display', serif; font-size: 1.05em; font-style: italic; color: var(--ink); line-height: 1.75; margin: 0; border: none; background: none; padding: 0; }
+        .nav-section { display: flex; justify-content: flex-start; gap: 6px; margin: 20px 0; padding: 10px 0; border-top: 1px solid var(--warm-border); border-bottom: 1px solid var(--warm-border); flex-wrap: wrap; position: sticky; top: 0; z-index: 100; background-color: var(--paper); }
+        .nav-button { background: none; border: 1px solid var(--warm-border); border-radius: 2px; padding: 4px 10px; cursor: pointer; font-family: 'Space Mono', monospace; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; transition: all 0.2s; color: var(--mid); }
+        .nav-button:hover { border-color: var(--ink); color: var(--ink); }
+        .nav-button.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+        .section-content { border-bottom: 1px solid var(--warm-border); padding: 25px 0; }
+        .section-title { font-family: 'DM Serif Display', serif; font-size: 1.4em; font-weight: 400; margin-bottom: 20px; color: var(--ink); border-bottom: 1px solid var(--warm-border); padding: 0 0 12px; background: none; }
+        .introduction { border-left: 3px solid var(--warm-border); padding: 0 0 0 20px; margin-bottom: 25px; }
+        .introduction p { margin-bottom: 1em; }
+        .introduction p:last-child { margin-bottom: 0; }
+        .highlight-box { background: var(--paper-mid); border-left: 3px solid var(--ink); padding: 14px 18px; margin: 20px 0; }
+        .highlight-box h4 { margin: 0 0 8px 0; border-bottom: 1px solid var(--warm-border); padding-bottom: 8px; }
+        .highlight-box p { margin: 0; }
+        .quote { font-family: 'DM Serif Display', serif; font-style: italic; font-size: 1.0em; padding: 14px 0 14px 20px; border-left: 3px solid var(--ink); margin: 20px 0; color: var(--ink); line-height: 1.75; }
+        .research-questions { background: var(--paper-mid); border-left: 3px solid var(--ink); padding: 16px 20px; margin: 20px 0; }
+        .research-questions h4 { margin: 0 0 12px 0; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; }
+        .research-questions ul { margin: 0; padding-left: 18px; }
+        .research-questions li { margin-bottom: 8px; line-height: 1.7; font-size: 0.88rem; }
+        .workflow-box { background: white; border: 1px solid var(--warm-border); border-radius: 3px; margin-bottom: 25px; overflow: hidden; }
+        .workflow-header { background: var(--ink); color: var(--paper); padding: 12px 20px; }
+        .workflow-header h4 { margin: 0; color: var(--paper); letter-spacing: 0.1em; }
+        .workflow-steps { padding: 0 20px; background: white; }
+        .step { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 5px 14px; padding: 16px 0; border-bottom: 1px solid var(--grid); }
+        .step:last-child { border-bottom: none; }
+        .step-number { width: 28px; height: 28px; background: var(--ink); color: var(--paper); border-radius: 50%; text-align: center; line-height: 28px; font-weight: 700; font-family: 'Space Mono', monospace; font-size: 0.72rem; flex-shrink: 0; }
+        .step-title { font-weight: 700; color: var(--ink); font-size: 0.78rem; font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: 0.06em; align-self: center; }
+        .step-content { width: 100%; padding-left: 42px; margin-top: 4px; }
+        .step-content p { margin: 0 0 6px 0; font-size: 0.85rem; }
+        .data-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 20px 0; }
+        .data-card { background: white; border: 1px solid var(--warm-border); border-radius: 3px; padding: 14px; text-align: center; }
+        .data-mark { font-family: 'DM Serif Display', serif; font-size: 1.3em; color: var(--ink); margin-bottom: 4px; font-style: italic; }
+        .data-count { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 0.9rem; color: var(--mid); }
+        .data-name { font-family: 'Space Mono', monospace; font-size: 0.58rem; color: var(--mid); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+        @media (min-width: 600px) { .data-grid { grid-template-columns: repeat(6, 1fr); } }
+        .character-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 20px; }
+        .character-card { background: white; border: 1px solid var(--warm-border); border-radius: 3px; padding: 16px 12px; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .character-card:hover { border-color: var(--ink); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .character-symbol { font-family: 'DM Serif Display', serif; font-style: italic; font-size: 1.3em; margin-bottom: 8px; color: var(--ink); }
+        .character-name { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 0.65rem; color: var(--ink); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+        .character-trait { font-size: 0.65rem; color: var(--paper); background: var(--ink); padding: 2px 8px; border-radius: 2px; display: inline-block; font-family: 'Space Mono', monospace; }
+        .collapsible { background: none; cursor: pointer; padding: 10px 0; width: 100%; border: none; border-bottom: 1px solid var(--warm-border); text-align: left; outline: none; font-size: 0.7rem; font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0; transition: color 0.2s; display: flex; justify-content: space-between; align-items: center; color: var(--mid); }
+        .collapsible:after { content: '▶'; font-size: 8px; color: var(--mid); transition: transform 0.3s; }
+        .collapsible.active:after { transform: rotate(90deg); }
+        .collapsible:hover, .collapsible.active { color: var(--ink); }
+        .collapsible-content { padding: 0; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; background: var(--paper-mid); margin-bottom: 4px; }
+        .collapsible-content.open { max-height: 5000px; }
+        .collapsible-content > * { padding: 15px; }
+        .insight-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 15px; }
+        .insight-card { background: white; padding: 16px; border: 1px solid var(--warm-border); border-radius: 3px; }
+        .insight-title { font-family: 'Space Mono', monospace; font-weight: 700; color: var(--ink); margin: 0 0 8px 0; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; display: block; }
+        .insight-card p { margin: 0; font-size: 0.82rem; }
+        @media (min-width: 600px) { .insight-grid { grid-template-columns: repeat(2, 1fr); } }
+        .emotion-exploration { border: 1px solid var(--warm-border); border-radius: 3px; margin-bottom: 30px; overflow: hidden; background: var(--paper); }
+        .emotion-header { display: flex; align-items: center; gap: 20px; padding: 20px 25px; background: var(--ink); flex-wrap: wrap; }
+        .emotion-symbol { font-family: 'DM Serif Display', serif; font-style: italic; font-size: 1.3em; width: 80px; height: 80px; display: flex; justify-content: center; align-items: center; background: var(--paper); color: var(--ink); border-radius: 50%; flex-shrink: 0; text-align: center; }
+        .emotion-info { flex: 1; min-width: 180px; }
+        .emotion-name { font-family: 'DM Serif Display', serif; font-size: 1.6em; font-weight: 400; color: var(--paper); margin: 0 0 4px 0; }
+        .emotion-trait { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: rgba(242,237,232,0.5); margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.1em; }
+        .emotion-category { font-family: 'Space Mono', monospace; display: inline-block; color: var(--paper); padding: 3px 10px; border-radius: 2px; font-size: 0.62rem; border: 1px solid rgba(242,237,232,0.3); text-transform: uppercase; letter-spacing: 0.08em; }
+        .emotion-body-inner { padding: 20px; }
+        .collage-display { background: var(--ink); margin: 0 0 20px; overflow: hidden; }
+        .collage-label { font-family: 'Space Mono', monospace; font-weight: 700; color: rgba(242,237,232,0.4); padding: 12px 20px 0; font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; display: block; }
+        .collage-placeholder { width: 100%; height: 320px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--ink); }
+        .collage-placeholder-icon { font-family: 'DM Serif Display', serif; font-style: italic; font-size: 2.6em; opacity: 0.15; color: var(--paper); margin-bottom: 12px; }
+        .collage-placeholder-text { font-family: 'Space Mono', monospace; font-size: 0.62rem; opacity: 0.25; color: var(--paper); letter-spacing: 0.15em; text-transform: uppercase; text-align: center; padding: 0 20px; }
+        .collage-display img { width: 100%; max-height: 480px; object-fit: cover; display: block; }
+        .collage-caption { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: rgba(242,237,232,0.35); font-style: italic; margin: 0; padding: 10px 20px 14px; background: var(--ink); }
+        .human-input, .human-response { background: white; border: 1px solid var(--warm-border); border-radius: 3px; margin: 16px 0; overflow: hidden; }
+        .human-input-header, .human-response-header { background: var(--ink); color: var(--paper); padding: 10px 16px; display: flex; align-items: center; gap: 10px; }
+        .human-input-header h4, .human-response-header h4 { margin: 0; color: var(--paper); font-size: 0.72rem; }
+        .human-badge { background: var(--paper); color: var(--ink); padding: 2px 8px; border-radius: 2px; font-size: 0.62rem; font-weight: 700; font-family: 'Space Mono', monospace; }
+        .human-input-body, .human-response-body { padding: 14px 16px; }
+        .human-input-body p, .human-response-body p { margin-bottom: 8px; font-style: italic; font-size: 0.82rem; color: var(--mid); }
+        .proximity-container { display: flex; align-items: flex-start; gap: 14px; margin: 16px 0; background: var(--paper-mid); padding: 14px 16px; border-left: 3px solid var(--warm-border); flex-wrap: wrap; }
+        .proximity-icon { background: white; padding: 10px; border-radius: 50%; border: 1px solid var(--warm-border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .proximity-text { flex: 1; min-width: 180px; }
+        .proximity-text p { margin: 0; font-size: 0.82rem; }
+        .ai-output { background: white; border: 1px solid var(--warm-border); border-radius: 3px; margin: 16px 0; overflow: hidden; }
+        .ai-output-header { background: var(--ink); color: var(--paper); padding: 10px 16px; display: flex; align-items: center; gap: 10px; }
+        .ai-output-header h4 { margin: 0; color: var(--paper); font-size: 0.72rem; }
+        .claude-badge { background: var(--paper); color: var(--ink); padding: 2px 8px; border-radius: 2px; font-size: 0.62rem; font-weight: 700; font-family: 'Space Mono', monospace; }
+        .ai-output-body { padding: 16px; }
+        .session-metadata { background: var(--paper-mid); border-radius: 3px; padding: 10px 14px; margin: 0 0 14px; font-family: 'Space Mono', monospace; font-size: 0.62rem; display: flex; flex-wrap: wrap; gap: 10px 20px; }
+        .metadata-item { display: flex; gap: 5px; }
+        .metadata-label { font-weight: 700; color: var(--ink); }
+        .metadata-value { color: var(--mid); }
+        .analysis-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 14px; }
+        .analysis-card { background: var(--paper-mid); padding: 14px; border-left: 3px solid var(--warm-border); }
+        .analysis-title { font-family: 'Space Mono', monospace; font-weight: 700; color: var(--ink); margin: 0 0 6px 0; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; display: block; }
+        .analysis-card p { margin: 0; font-size: 0.82rem; color: var(--mid); }
+        @media (min-width: 600px) { .analysis-grid { grid-template-columns: repeat(2, 1fr); } }
+        .findings-box { background: white; border: 1px solid var(--warm-border); border-radius: 3px; padding: 16px; margin: 14px 0; }
+        .findings-box h4 { border-bottom: 1px solid var(--warm-border); padding-bottom: 8px; margin-bottom: 10px; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; }
+        .findings-box p { margin-bottom: 8px; font-size: 0.85rem; }
+        .findings-box p:last-child { margin-bottom: 0; }
+        .dotted-divider { border: none; border-top: 1px solid var(--warm-border); margin: 30px 0; }
+        .wheel-wrap { background: white; border: 1px solid var(--warm-border); border-radius: 3px; padding: 20px; margin: 20px 0; text-align: center; }
+        .wheel-caption { font-family: 'Space Mono', monospace; font-size: 0.62rem; color: var(--mid); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 10px; }
+        .open-question { background: var(--paper-mid); border-left: 3px solid var(--ink); padding: 10px 16px; margin: 10px 0; font-size: 0.85rem; }
+        .open-question strong { display: block; font-family: 'Space Mono', monospace; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--mid); margin-bottom: 4px; }
+        footer { margin-top: 40px; border-top: 1px solid var(--warm-border); padding: 20px 0; }
+        .footer-nav { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+        .footer-nav a { padding: 4px 10px; background: none; color: var(--mid); text-decoration: none; border: 1px solid var(--warm-border); border-radius: 2px; font-family: 'Space Mono', monospace; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; transition: all 0.2s; }
+        .footer-nav a:hover { border-color: var(--ink); color: var(--ink); text-decoration: none; }
+        footer p { margin: 0 0 4px 0; font-size: 0.68rem; color: var(--mid); font-family: 'Space Mono', monospace; }
+        @media (max-width: 768px) { body { padding: 12px; } .page-wrapper, .page-container { padding: 12px; width: 95%; } h1 { font-size: 1.6rem; } .nav-button { font-size: 0.58rem; padding: 4px 8px; } .collapsible { font-size: 0.65rem; } }
+        @media (max-width: 480px) { body { padding: 8px; } .page-wrapper, .page-container { padding: 10px; } h1 { font-size: 1.3rem; } .data-grid { grid-template-columns: repeat(3, 1fr); } }
+    </style>
+</head>
+<body>
+<div class="page-wrapper">
+<div class="page-container">
+
+<!-- HERO -->
+<section>
+    <div class="hero-title-bar">
+        <h1>What the Machine Hears</h1>
+        <p class="hero-subtitle">A companion piece to The Secret Lives of Punctuation — draft template, not yet populated with real data</p>
+    </div>
+    <div class="hero-gallery">
+        <div class="hero-gallery-item" onclick="scrollToSection('happiness-exploration')"><div class="hero-gallery-symbol">Joy</div><div class="hero-gallery-label">Happiness</div></div>
+        <div class="hero-gallery-item" onclick="scrollToSection('sadness-exploration')"><div class="hero-gallery-symbol">Sad</div><div class="hero-gallery-label">Sadness</div></div>
+        <div class="hero-gallery-item" onclick="scrollToSection('fear-exploration')"><div class="hero-gallery-symbol">Fear</div><div class="hero-gallery-label">Fear</div></div>
+        <div class="hero-gallery-item" onclick="scrollToSection('anger-exploration')"><div class="hero-gallery-symbol">Anger</div><div class="hero-gallery-label">Anger</div></div>
+        <div class="hero-gallery-item" onclick="scrollToSection('disgust-exploration')"><div class="hero-gallery-symbol">Disg.</div><div class="hero-gallery-label">Disgust</div></div>
+        <div class="hero-gallery-item" onclick="scrollToSection('surprise-exploration')"><div class="hero-gallery-symbol">Surp.</div><div class="hero-gallery-label">Surprise</div></div>
+    </div>
+    <div class="artist-statement">
+        <p>[Draft artist statement — replace with your own voice. A starting thought: if punctuation was the architecture left behind once words are stripped away, this asks what's left of feeling once a voice is stripped to tone alone — and whether a machine built to listen for that tone hears an autistic voice the way it hears any other.]</p>
+    </div>
+</section>
+
+<!-- NAVIGATION -->
+<nav class="nav-section">
+    <button class="nav-button active" onclick="scrollToSection('introduction')">Introduction</button>
+    <button class="nav-button" onclick="scrollToSection('framework')">Framework</button>
+    <button class="nav-button" onclick="scrollToSection('baseline')">Baseline</button>
+    <button class="nav-button" onclick="scrollToSection('method')">Method</button>
+    <button class="nav-button" onclick="scrollToSection('characters')">Characters</button>
+    <button class="nav-button" onclick="scrollToSection('explorations')">Explorations</button>
+    <button class="nav-button" onclick="scrollToSection('findings')">Findings</button>
+</nav>
+
+<main>
+
+<!-- INTRODUCTION -->
+<section id="introduction">
+    <div class="section-content">
+        <h2 class="section-title">Introduction</h2>
+        <div class="introduction">
+            <p>[Context for this piece — how the collaboration with your psychologist collaborator began, and why an emotion-detecting voice AI became the subject rather than a text model alone.]</p>
+        </div>
+        <div class="research-questions">
+            <h4>Core Research Questions</h4>
+            <ul>
+                <li>Does a voice AI built to detect emotional expression register autistic vocal expression with the same accuracy it shows for neurotypical expression — or does it inherit the same bias documented in facial-recognition systems trained mostly on neurotypical data?</li>
+                <li>Where the machine is wrong, is it wrong in a consistent direction — always mistaking one feeling for the same other feeling — or randomly?</li>
+                <li>Could a machine, in some specific instance, register something true about an autistic speaker's feeling that a neurotypical listener misses?</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- FRAMEWORK -->
+<section id="framework">
+    <div class="section-content">
+        <h2 class="section-title">Theoretical Framework</h2>
+        <p>[Note collaborator's name and discipline here.] This project keeps the same governing rule that shaped the punctuation work: two independent investigations, run side by side, neither one explaining or standing in for the other.</p>
+        <button class="collapsible">Two Independent Tracks</button>
+        <div class="collapsible-content">
+            <div class="quote">The embodied side of this work has to come from autistic collaborators directly, not from an artist's reflection on their behalf — that substitution would be a different, weaker claim than the punctuation piece made, where any person's relationship to a comma was a fair stand-in for "a person's." The machine side stays governed by the same rule as before: EVI is never asked to discuss or interpret emotion or autism. It is only ever observed.</div>
+        </div>
+        <button class="collapsible">The Entanglement Problem, Carried Forward</button>
+        <div class="collapsible-content">
+            <div class="quote">Asking a model to self-report on emotion produces performed language about emotion, not a machine signal — the same finding that shaped the punctuation piece's method. Here that means working from EVI's actual classification and confidence output against real speech, never from EVI's own description of what it thinks it heard.</div>
+        </div>
+        <div class="insight-grid">
+            <div class="insight-card"><span class="insight-title">Human Processing</span><p>[What autistic collaborators' embodied input reveals — to be written once that input exists.]</p></div>
+            <div class="insight-card"><span class="insight-title">Machine Behaviour</span><p>EVI's classification and confidence scores against real speech, extracted as data — not self-report, the same principle as the punctuation piece's machine track.</p></div>
+            <div class="insight-card"><span class="insight-title">The Channel</span><p>Not the keyboard this time — the voice. Prosody: tune, rhythm, timbre. The place tone of voice passes between a person and a machine that's listening for feeling rather than words.</p></div>
+            <div class="insight-card"><span class="insight-title">The Gap</span><p>Where the true emotion and EVI's reading agree, something about the mark's legibility is revealed. Where they diverge — and in which direction — something about the machine's training bias becomes visible instead.</p></div>
+        </div>
+    </div>
+</section>
+
+<!-- BASELINE -->
+<section id="baseline">
+    <div class="section-content">
+        <h2 class="section-title">Baseline — Ekman's Six Basic Emotions</h2>
+        <div class="open-question">
+            <strong>To confirm with collaborator</strong>
+            This is the standard six-emotion model used across most of the existing autism-and-emotion-recognition literature. It is a starting placeholder, not a final decision — the actual ground-truth scale for this project needs to be whatever taxonomy your collaborator's research design specifies, since that choice determines what counts as a valid "true" label.
+        </div>
+        <div class="wheel-wrap">
+            <svg viewBox="0 0 360 360" width="100%" style="max-width:360px;">
+                <circle cx="180" cy="180" r="150" fill="none" stroke="#ccc7c0" stroke-width="1"/>
+                <circle cx="180" cy="180" r="3" fill="#1a1a1a"/>
+                <g font-family="IBM Plex Mono, monospace" font-size="12" fill="#1a1a1a">
+                    <line x1="180" y1="180" x2="180" y2="30" stroke="#ccc7c0" stroke-width="1"/>
+                    <text x="180" y="22" text-anchor="middle">Happiness</text>
+                    <line x1="180" y1="180" x2="310" y2="105" stroke="#ccc7c0" stroke-width="1"/>
+                    <text x="322" y="100" text-anchor="start">Surprise</text>
+                    <line x1="180" y1="180" x2="310" y2="255" stroke="#ccc7c0" stroke-width="1"/>
+                    <text x="322" y="262" text-anchor="start">Fear</text>
+                    <line x1="180" y1="180" x2="180" y2="330" stroke="#ccc7c0" stroke-width="1"/>
+                    <text x="180" y="346" text-anchor="middle">Sadness</text>
+                    <line x1="180" y1="180" x2="50" y2="255" stroke="#ccc7c0" stroke-width="1"/>
+                    <text x="38" y="262" text-anchor="end">Disgust</text>
+                    <line x1="180" y1="180" x2="50" y2="105" stroke="#ccc7c0" stroke-width="1"/>
+                    <text x="38" y="100" text-anchor="end">Anger</text>
+                </g>
+            </svg>
+            <p class="wheel-caption">Reference diagram only — not a wheel of opposites or intensities, just the six fixed points this project compares against</p>
+        </div>
+        <p>Each emotion below gets one vessel, the same way each punctuation mark got one object. EVI's confidence and classification data will be compared against whichever of these six (or collaborator-revised set) was actually felt.</p>
+    </div>
+</section>
+
+<!-- METHOD -->
+<section id="method">
+    <div class="section-content">
+        <h2 class="section-title">Methodology</h2>
+        <div class="workflow-box">
+            <div class="workflow-header"><h4>Investigative Process</h4></div>
+            <div class="workflow-steps">
+                <div class="step"><span class="step-number">1</span><span class="step-title">Fix the Ground-Truth Taxonomy</span><div class="step-content"><p>Decided with the collaborator, not chosen artistically. This has to be settled before anything else — it is what makes the "true" label valid.</p></div></div>
+                <div class="step"><span class="step-number">2</span><span class="step-title">Source Consented Expression Samples</span><div class="step-content"><p>Real autistic speakers, anonymised, gathered through the collaborator's ethics pathway.</p></div></div>
+                <div class="step"><span class="step-number">3</span><span class="step-title">Run Samples Through EVI — Behaviour, Not Self-Report</span><div class="step-content"><p>EVI 3, potentially configured on Claude as the underlying model. Capture the actual classification and confidence score per sample.</p></div></div>
+                <div class="step"><span class="step-number">4</span><span class="step-title">One Vessel Per Baseline Emotion</span><div class="step-content"><p>Each vessel carries a base pattern for its emotion. A translucent tracing-paper hand-shape, in the confused emotion's gestural form, overlaps onto the vessel wherever EVI mistakes one for the other — layered more heavily where the confusion is frequent. Confusion is recorded as asymmetric: each direction shown independently.</p></div></div>
+                <div class="step"><span class="step-number">5</span><span class="step-title">Sonify the Comparison, Per Emotion</span><div class="step-content"><p>Two simultaneous lines per vessel's sound piece — true emotion and EVI's detected emotion across the test timeline. Pitch identifies the emotion category. Confidence maps to volume and clarity, not pitch, so a confident misread sounds clean and certain rather than hesitant. Density of divergence becomes the piece's overall texture.</p></div></div>
+                <div class="step"><span class="step-number">6</span><span class="step-title">Pair Object and Sound by Proximity</span><div class="step-content"><p>Same mechanism as the punctuation piece. Approaching a vessel triggers that emotion's sound. The visible bleed and the audible clash should corroborate one finding, not duplicate it.</p></div></div>
+            </div>
+        </div>
+        <div class="highlight-box">
+            <h4>The Data — Pending Collection</h4>
+            <p>No samples have been tested yet. The grid below is a placeholder shape for whatever the actual detection counts turn out to be, once a sample set exists.</p>
+        </div>
+        <div class="data-grid">
+            <div class="data-card"><div class="data-mark">Joy</div><div class="data-count">—</div><div class="data-name">Happiness</div></div>
+            <div class="data-card"><div class="data-mark">Sad</div><div class="data-count">—</div><div class="data-name">Sadness</div></div>
+            <div class="data-card"><div class="data-mark">Fear</div><div class="data-count">—</div><div class="data-name">Fear</div></div>
+            <div class="data-card"><div class="data-mark">Ang.</div><div class="data-count">—</div><div class="data-name">Anger</div></div>
+            <div class="data-card"><div class="data-mark">Dis.</div><div class="data-count">—</div><div class="data-name">Disgust</div></div>
+            <div class="data-card"><div class="data-mark">Sur.</div><div class="data-count">—</div><div class="data-name">Surprise</div></div>
+        </div>
+    </div>
+</section>
+
+<!-- CHARACTERS -->
+<section id="characters">
+    <div class="section-content">
+        <h2 class="section-title">The Six</h2>
+        <div class="introduction"><p>Each emotion is treated as an entity with an operational function — what it drives a person toward or away from — rather than a fixed symbolic meaning, the same way the punctuation marks were treated by their structural role rather than their grammar-book definition.</p></div>
+        <div class="character-grid">
+            <div class="character-card" onclick="scrollToSection('happiness-exploration')"><div class="character-symbol">Joy</div><div class="character-name">Happiness</div><div class="character-trait">Approach</div></div>
+            <div class="character-card" onclick="scrollToSection('sadness-exploration')"><div class="character-symbol">Sad</div><div class="character-name">Sadness</div><div class="character-trait">Withdrawal</div></div>
+            <div class="character-card" onclick="scrollToSection('fear-exploration')"><div class="character-symbol">Fear</div><div class="character-name">Fear</div><div class="character-trait">Alert</div></div>
+            <div class="character-card" onclick="scrollToSection('anger-exploration')"><div class="character-symbol">Anger</div><div class="character-name">Anger</div><div class="character-trait">Confrontation</div></div>
+            <div class="character-card" onclick="scrollToSection('disgust-exploration')"><div class="character-symbol">Disg.</div><div class="character-name">Disgust</div><div class="character-trait">Rejection</div></div>
+            <div class="character-card" onclick="scrollToSection('surprise-exploration')"><div class="character-symbol">Surp.</div><div class="character-name">Surprise</div><div class="character-trait">Orientation</div></div>
+        </div>
+    </div>
+</section>
+
+<hr class="dotted-divider">
+
+<!-- EXPLORATIONS -->
+<section id="explorations">
+<h2 class="section-title">Explorations</h2>
+<p style="margin-bottom:20px;">All six below are empty templates. None of this data exists yet — these are placeholders to fill once samples, vessels, and sound pieces are made.</p>
+
+<!-- HAPPINESS -->
+<div id="happiness-exploration" class="emotion-exploration">
+    <div class="emotion-header">
+        <div class="emotion-symbol">Joy</div>
+        <div class="emotion-info">
+            <div class="emotion-name">Happiness</div>
+            <p class="emotion-trait">Approach Emotion</p>
+            <span class="emotion-category">Pending data — events, accuracy TBD</span>
+        </div>
+    </div>
+    <div class="collage-display">
+        <span class="collage-label">Physical Vessel — Human Interpretation</span>
+        <div class="collage-placeholder"><div class="collage-placeholder-icon">Joy</div><div class="collage-placeholder-text">Image of finished vessel here</div></div>
+        <p class="collage-caption">[Caption describing the object, material, and pattern motif]</p>
+    </div>
+    <div class="emotion-body-inner">
+        <div class="human-input"><div class="human-input-header"><h4>Embodied Reflection</h4><span class="human-badge">Autistic Collaborator</span></div><div class="human-input-body"><p>[First-hand reflection from an autistic collaborator on expressing happiness — not a proxy reflection.]</p></div></div>
+        <div class="proximity-container"><div class="proximity-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--mid)"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div><div class="proximity-text"><p><strong>Proximity trigger:</strong> [What approaching this vessel reveals once real data exists.]</p></div></div>
+        <div class="ai-output">
+            <div class="ai-output-header"><h4>Machine Behaviour — Happiness</h4><span class="claude-badge">EVI Output</span></div>
+            <div class="ai-output-body">
+                <div class="session-metadata"><div class="metadata-item"><span class="metadata-label">Emotion:</span><span class="metadata-value">Happiness</span></div><div class="metadata-item"><span class="metadata-label">Accuracy:</span><span class="metadata-value">TBD</span></div><div class="metadata-item"><span class="metadata-label">Most confused with:</span><span class="metadata-value">TBD</span></div><div class="metadata-item"><span class="metadata-label">Method:</span><span class="metadata-value">Classification + confidence → sonification</span></div></div>
+                <audio controls style="width:100%;"><source src="sounds/happiness.wav" type="audio/wav"></audio>
+            </div>
+        </div>
+        <div class="human-response"><div class="human-response-header"><h4>Response to Machine Sound</h4><span class="human-badge">Human</span></div><div class="human-response-body"><p>[Reflection after hearing the comparison sonification.]</p></div></div>
+        <button class="collapsible">Observations</button>
+        <div class="collapsible-content"><div class="analysis-grid">
+            <div class="analysis-card"><span class="analysis-title">Convergence</span><p>[Observation]</p></div>
+            <div class="analysis-card"><span class="analysis-title">Divergence</span><p>[Observation]</p></div>
+            <div class="analysis-card"><span class="analysis-title">What the Data Reveals</span><p>[Observation]</p></div>
+            <div class="analysis-card"><span class="analysis-title">The Encounter</span><p>[Observation]</p></div>
+        </div></div>
+    </div>
+</div>
+<hr class="dotted-divider">
+
+<!-- SADNESS -->
+<div id="sadness-exploration" class="emotion-exploration">
+    <div class="emotion-header">
+        <div class="emotion-symbol">Sad</div>
+        <div class="emotion-info"><div class="emotion-name">Sadness</div><p class="emotion-trait">Withdrawal Emotion</p><span class="emotion-category">Pending data</span></div>
+    </div>
+    <div class="collage-display"><span class="collage-label">Physical Vessel — Human Interpretation</span><div class="collage-placeholder"><div class="collage-placeholder-icon">Sad</div><div class="collage-placeholder-text">Image of finished vessel here</div></div><p class="collage-caption">[Caption]</p></div>
+    <div class="emotion-body-inner">
+        <div class="human-input"><div class="human-input-header"><h4>Embodied Reflection</h4><span class="human-badge">Autistic Collaborator</span></div><div class="human-input-body"><p>[First-hand reflection on expressing sadness.]</p></div></div>
+        <div class="proximity-container"><div class="proximity-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--mid)"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div><div class="proximity-text"><p><strong>Proximity trigger:</strong> [TBD]</p></div></div>
+        <div class="ai-output"><div class="ai-output-header"><h4>Machine Behaviour — Sadness</h4><span class="claude-badge">EVI Output</span></div><div class="ai-output-body"><div class="session-metadata"><div class="metadata-item"><span class="metadata-label">Emotion:</span><span class="metadata-value">Sadness</span></div><div class="metadata-item"><span class="metadata-label">Accuracy:</span><span class="metadata-value">TBD</span></div><div class="metadata-item"><span class="metadata-label">Most confused with:</span><span class="metadata-value">TBD</span></div></div><audio controls style="width:100%;"><source src="sounds/sadness.wav" type="audio/wav"></audio></div></div>
+        <div class="human-response"><div class="human-response-header"><h4>Response to Machine Sound</h4><span class="human-badge">Human</span></div><div class="human-response-body"><p>[Reflection]</p></div></div>
+        <button class="collapsible">Observations</button>
+        <div class="collapsible-content"><div class="analysis-grid">
+            <div class="analysis-card"><span class="analysis-title">Convergence</span><p>[Observation]</p></div>
+            <div class="analysis-card"><span class="analysis-title">Divergence</span><p>[Observation]</p></div>
+            <div class="analysis-card"><span class="analysis-title">What the Data Reveals</span><p>[Observation]</p></div>
+            <div class="analysis-card"><span class="analysis-title">The Encounter</span><p>[Observation]</p></div>
+        </div></div>
+    </div>
+</div>
+<hr class="dotted-divider">
+
+<!-- FEAR -->
+<div id="fear-exploration" class="emotion-exploration">
+    <div class="emotion-header"><div class="emotion-symbol">Fear</div><div class="emotion-info"><div class="emotion-name">Fear</div><p class="emotion-trait">Alert Emotion</p><span class="emotion-category">Pending data</span></div></div>
+    <div class="collage-display"><span class="collage-label">Physical Vessel — Human Interpretation</span><div class="collage-placeholder"><div class="collage-placeholder-icon">Fear</div><div class="collage-placeholder-text">Image of finished vessel here</div></div><p class="collage-caption">[Caption]</p></div>
+    <div class="emotion-body-inner">
+        <div class="human-input"><div class="human-input-header"><h4>Embodied Reflection</h4><span class="human-badge">Autistic Collaborator</span></div><div class="human-input-body"><p>[First-hand reflection on expressing fear.]</p></div></div>
+        <div class="proximity-container"><div class="proximity-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--mid)"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div><div class="proximity-text"><p><strong>Proximity trigger:</strong> [TBD]</p></div></div>
+        <div class="ai-output"><div class="ai-output-header"><h4>Machine Behaviour — Fear</h4><span class="claude-badge">EVI Output</span></div><div class="ai-output-body"><div class="session-metadata"><div class="metadata-item"><span class="metadata-label">Emotion:</span><span class="metadata-value">Fear</span></div><div class="metadata-item"><span class="metadata-label">Accuracy:</span><span class="metadata-value">TBD</span></div><div class="metadata-item"><span class="metadata-label">Most confused with:</span><span class="metadata-value">TBD</span></div></div><audio controls style="width:100%;"><source src="sounds/fear.wav" type="audio/wav"></audio></div></div>
+        <div class="human-response"><div class="human-response-header"><h4>Response to Machine Sound</h4><span class="human-badge">Human</span></div><div class="human-response-body"><p>[Reflection]</p></div></div>
+        <button class="collapsible">Observations</button>
+        <div class="collapsible-content"><div class="analysis-grid">
+            <div class="analysis-card"><span class="analysis-title">Convergence</span><p>[Observation]</p></div>
+            <div class="analysis-card"><span class="analysis-title">Divergence</span><p>[Observation]</p></div>
+            <div class="analysis-card"><span class="analysis-title">What the Data Reveals</span><p>[Observation]</p></div>
+            <div class="analysis-card"><span class="analysis-title">The Encounter</span><p>[Observation]</p></div>
+        </div></div>
+    </div>
+</div>
+<hr class="dotted-divider">
+
+<!-- ANGER -->
+<div id="anger-exploration" class="emotion-exploration">
+    <div class="emotion-header"><div class="emotion-symbol">Anger</div><div class="emotion-info"><div class="emotion-name">Anger</div><p class="emotion-trait">Confrontation Emotion</p><span class="emotion-category">Pending data</span></div></div>
+    <div class="collage-display"><span class="collage-label">Physical Vessel — Human Interpretation</span><div class="collage-placeholder"><div class="collage-placeholder-icon">Anger</div><div class="collage-placeholder-text">Image of finished vessel here</div></div><p class="collage-caption">[Caption]</p></div>
+    <div class="emotion-body-inner">
+        <div class="human-input"><div class="human-input-header"><h4>Embodied Reflection</h4><span class="human-badge">Autistic Collaborator</span></div><div class="human-input-body"><p>[First-hand reflection on expressing anger.]</p></div></div>
+        <div class="proximity-container"><div class="proximity-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--mid)"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div><div class="proximity-text"><p><strong>Proximity trigger:</strong> [TBD]</p></div></div>
+        <div class="ai-output"><div class="ai-output-header"><h4>Machine Behaviour — Anger</h4><span class="claude-badge">EVI Output</span></div><div class="ai-output-body"><div class="session-metadata"><div class="metadata-item"><span class="metadata-label">Emotion:</span><span class="metadata-value">Anger</span></div><div class="metadata-item"><span class="metadata-label">Accuracy:</span><span class="metadata-value">TBD</span></div><div class="metadata-item"><span class="metadata-label">Most confused with:</span><span class="metadata-value">TBD</span></div></div><audio controls style="width:100%;"><source src="sounds/anger.wav" type="audio/wav"></audio></div></div>
+        <div class="human-response"><div class="human-response-header"><h4>Response to Machine Sound</h4><span class="human-badge">Human</span></div><div class="human-response-body"><p>[Reflection]</p></div></div>
+        <button class="collapsible">Observations</button>
+        <div class="collapsible-content"><div class="analysis-grid">
+            <div class="analysis-card"><span class="analysis-title">Convergence</span><p>[Observation]</p></div>
+            <div class="analysis-card"><span class="analysis-title">Divergence</span><p>[Observation]</p></div>
+            <div class="analysis-card"><span class="analysis-title">What the Data Reveals</span><p>[Observation]</p></div>
+            <div class="analysis-card"><span class="analysis-title">The Encounter</span><p>[Observation]</p></div>
+        </div></div>
+    </div>
+</div>
+<hr class="dotted-divider">
+
+<!-- DISGUST -->
+<div id="disgust-exploration" class="emotion-exploration">
+    <div class="emotion-header"><div class="emotion-symbol">Disg.</div><div class="emotion-info"><div class="emotion-name">Disgust</div><p class="emotion-trait">Rejection Emotion</p><span class="emotion-category">Pending data</span></div></div>
+    <div class="collage-display"><span class="collage-label">Physical Vessel — Human Interpretation</span><div class="collage-placeholder"><div class="collage-placeholder-icon">Disg.</div><div class="collage-placeholder-text">Image of finished vessel here</div></div><p class="collage-caption">[Caption]</p></div>
+    <div class="emotion-body-inner">
+        <div class="human-input"><div class="human-input-header"><h4>Embodied Reflection</h4><span class="human-badge">Autistic Collaborator</span></div><div class="human-input-body"><p>[First-hand reflection on expressing disgust.]</p></div></div>
+        <div class="proximity-container"><div class="proximity-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--mid)"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div><div class="proximity-text"><p><strong>Proximity trigger:</strong> [TBD]</p></div></div>
+        <div class="ai-output"><div class="ai-output-header"><h4>Machine Behaviour — Disgust</h4><span class="claude-badge">EVI Output</span></div><div class="ai-output-body"><div class="session-metadata"><div class="metadata-item"><span class="metadata-label">Emotion:</span><span class="metadata-value">Disgust</span></div><div class="metadata-item"><span class="metadata-label">Accuracy:</span><span class="metadata-value">TBD</span></div><div class="metadata-item"><span class="metadata-label">Most confused with:</span><span class="metadata-value">TBD</span></div></div><audio controls style="width:100%;"><source src="sounds/disgust.wav" type="audio/wav"></audio></div></div>
+        <div class="human-response"><div class="human-response-header"><h4>Response to Machine Sound</h4><span class="human-badge">Human</span></div><div class="human-response-body"><p>[Reflection]</p></div></div>
+        <button class="collapsible">Observations</button>
+        <div class="collapsible-content"><div class="analysis-grid">
+            <div class="analysis-card"><span class="analysis-title">Convergence</span><p>[Observation]</p></div>
+            <div class="analysis-card"><span class="analysis-title">Divergence</span><p>[Observation]</p></div>
+            <div class="analysis-card"><span class="analysis-title">What the Data Reveals</span><p>[Observation]</p></div>
+            <div class="analysis-card"><span class="analysis-title">The Encounter</span><p>[Observation]</p></div>
+        </div></div>
+    </div>
+</div>
+<hr class="dotted-divider">
+
+<!-- SURPRISE -->
+<div id="surprise-exploration" class="emotion-exploration">
+    <div class="emotion-header"><div class="emotion-symbol">Surp.</div><div class="emotion-info"><div class="emotion-name">Surprise</div><p class="emotion-trait">Orientation Emotion</p><span class="emotion-category">Pending data</span></div></div>
+    <div class="collage-display"><span class="collage-label">Physical Vessel — Human Interpretation</span><div class="collage-placeholder"><div class="collage-placeholder-icon">Surp.</div><div class="collage-placeholder-text">Image of finished vessel here</div></div><p class="collage-caption">[Caption]</p></div>
+    <div class="emotion-body-inner">
+        <div class="human-input"><div class="human-input-header"><h4>Embodied Reflection</h4><span class="human-badge">Autistic Collaborator</span></div><div class="human-input-body"><p>[First-hand reflection on expressing surprise.]</p></div></div>
+        <div class="proximity-container"><div class="proximity-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--mid)"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div><div class="proximity-text"><p><strong>Proximity trigger:</strong> [TBD]</p></div></div>
+        <div class="ai-output"><div class="ai-output-header"><h4>Machine Behaviour — Surprise</h4><span class="claude-badge">EVI Output</span></div><div class="ai-output-body"><div class="session-metadata"><div class="metadata-item"><span class="metadata-label">Emotion:</span><span class="metadata-value">Surprise</span></div><div class="metadata-item"><span class="metadata-label">Accuracy:</span><span class="metadata-value">TBD</span></div><div class="metadata-item"><span class="metadata-label">Most confused with:</span><span class="metadata-value">TBD</span></div></div><audio controls style="width:100%;"><source src="sounds/surprise.wav" type="audio/wav"></audio></div></div>
+        <div class="human-response"><div class="human-response-header"><h4>Response to Machine Sound</h4><span class="human-badge">Human</span></div><div class="human-response-body"><p>[Reflection]</p></div></div>
+        <button class="collapsible">Observations</button>
+        <div class="collapsible-content"><div class="analysis-grid">
+            <div class="analysis-card"><span class="analysis-title">Convergence</span><p>[Observation]</p></div>
+            <div class="analysis-card"><span class="analysis-title">Divergence</span><p>[Observation]</p></div>
+            <div class="analysis-card"><span class="analysis-title">What the Data Reveals</span><p>[Observation]</p></div>
+            <div class="analysis-card"><span class="analysis-title">The Encounter</span><p>[Observation]</p></div>
+        </div></div>
+    </div>
+</div>
+</section>
+
+<hr class="dotted-divider">
+
+<!-- FINDINGS -->
+<section id="findings">
+    <div class="section-content">
+        <h2 class="section-title">Emerging Findings</h2>
+        <div class="introduction"><p>[To be written once real samples have been tested. As with the punctuation piece, the output that matters is the comparison itself, not the individual vessels or sounds.]</p></div>
+        <div class="findings-box"><h4>The Machine's Signature</h4><p>[Once tested: which emotions does EVI register most reliably, and which does it most often misread — and is that pattern consistent with what the existing literature on AI and autistic expression would predict?]</p></div>
+        <div class="findings-box"><h4>On the Entanglement</h4><p>[Confirm the data-not-self-report approach held up in practice once real testing began.]</p></div>
+        <div class="findings-box"><h4>On the Gap</h4><p>[What the divergences reveal about EVI's training bias, once there's a real gap to describe.]</p></div>
+        <div class="quote">[Closing reflection — write once the work itself has something to say back to you, the way the punctuation piece's closing line did.]</div>
+    </div>
+</section>
+
+</main>
+
+<footer>
+    <div class="footer-nav">
+        <a href="#introduction">Introduction</a>
+        <a href="#framework">Framework</a>
+        <a href="#baseline">Baseline</a>
+        <a href="#method">Method</a>
+        <a href="#characters">Characters</a>
+        <a href="#explorations">Explorations</a>
+        <a href="#findings">Findings</a>
+    </div>
+    <p><strong>What the Machine Hears</strong></p>
+    <p>Physical Vessels: Human | Sound: EVI behaviour data → sonification | Trigger: Proximity sensor</p>
+    <p>Status: template — no real samples tested yet</p>
+    <p>© 2026 Heidi Stokes, in collaboration with [collaborator's name]</p>
+</footer>
+
+</div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var coll = document.getElementsByClassName("collapsible");
+        for (var i = 0; i < coll.length; i++) {
+            coll[i].addEventListener("click", function() {
+                this.classList.toggle("active");
+                var content = this.nextElementSibling;
+                if (content.classList.contains("open")) {
+                    content.classList.remove("open");
+                    content.style.maxHeight = null;
+                } else {
+                    content.classList.add("open");
+                    content.style.maxHeight = content.scrollHeight + "px";
+                }
+            });
+        }
+        window.scrollToSection = function(id) {
+            var element = document.getElementById(id);
+            if (element) element.scrollIntoView({behavior: "smooth", block: "start"});
+        };
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+    });
+</script>
+</body>
+</html>
